@@ -1,49 +1,87 @@
 #!/usr/bin/python3
 
-import pandas, requests
+import pandas, requests, datetime, urllib3
+import sys
+
 from bs4 import BeautifulSoup as bs
 
-#Scraps page for toner levels and returns array of levels
-#TODO: work on return array
-def get_levels(ip):
+#Parse Altalink page for toner levels
+def get_altalink_levels(ip):
     URL = "http://" + ip + "/stat/welcome.php?tab=status"
-    print (URL)
-    response = requests.get(URL, verify=False)
+    print ("testing URL: " + URL)
+    try:
+        response = requests.get(URL, verify=False)
+    except:
+        print("Can't reach " + ip + ", Please check the printer")
+        return []
     soup = bs(response.content, "html.parser")
     job_elements = soup.find_all("div", class_="levelIndicatorPercentage")
-    print(job_elements)
+    levels = []
+    for item in job_elements:
+        levels.append(float(item.text[1:3]))
+    return levels
+
+#Parse the versalink webpage for the toner level
+#TODO:Figure out why page is not being fully rendered
+def get_versalink_levels(ip):
+    URL = "http://" + ip + "/home/index.html#hashHome"
+    print ("testing URL: " + URL)
+    try:
+        response = requests.get(URL, verify=False)
+    except:
+        print("Can't reach " + ip + ", Please check the printer")
+        return []
+    soup = bs(response.content, "html.parser")
+    #print(soup)
+    job_elements = soup.find_all("li", class_="webui-home-media-text")
+    levels = []
+    for item in job_elements:
+        levels.append(float(item.text))
+    return levels
 
 
 #Pull in intial file for IPs to scrap
+urllib3.disable_warnings()
 df = pandas.read_csv('test.csv')
 
-'''
-#test printing and learning Pandas to parse csvs
-print (df)
-
-for column in df.columns[5:]:
-    print(df[column])
-
-#Figured out how to get the javascript to render by going to full site address not just IP
-URL = "http://" + df["ip"][1] + "/stat/welcome.php?tab=status"
-print(URL)
-'''
+#Testing webpage load for versalink
+#levels = get_versalink_levels("10.248.50.9") 
+#sys.exit()
 
 #Loop through IPs and get levels. Set the Levels in Pandas and update csv
-#TODO: get array and update the csv
-for ip in df["ip"]:
-    print(ip)
-    levels = get_levels(ip)
+printer_level_list = []
+levels = []
+for index, row in df.iterrows():
+    if ("AltaLink" in row['Model']):
+        #levels = get_altalink_levels(row['ip'].strip())
+        continue
+    if ("VersaLink" in row['Model']):
+        levels = get_versalink_levels(row['ip'].strip()) 
+    printer_level_list.append(levels)
 
 
+#Testing that the Printers returned levels
+print (printer_level_list)
+#sys.exit()
 
-'''
-#Testing bs and retrieving the correct location of levels from HTML
-response = requests.get(URL, verify=False)
-soup = bs(response.content, "html.parser")
+i = 0
+while i < len(printer_level_list):
+    if(len(printer_level_list[i]) == 0):
+        print (df.loc[i].at['ip'] + "is unavailable")
+        i+=1
+        continue
+    if(len(printer_level_list[i]) == 1):
+       # print("black toner only")#testing only
+        df.iat[i,10]= printer_level_list[i][0]
+        i+=1
+        continue
+    #print("color toner")#testing only
+    df.iat[i,7]= printer_level_list[i][0]
+    df.iat[i,8]= printer_level_list[i][1]
+    df.iat[i,9]= printer_level_list[i][2]
+    df.iat[i,10]= printer_level_list[i][3]
+    i+=1
 
-#print(soup)
-job_elements = soup.find_all("div", class_="levelIndicatorPercentage")
-
-print(job_elements)
-'''   
+dt = datetime.datetime.now()
+name = "Printer_Levels_" + dt.strftime("%Y-%m-%d") + ".csv"
+df.to_csv(name, index=False)
