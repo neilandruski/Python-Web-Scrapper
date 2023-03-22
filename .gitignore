@@ -1,7 +1,6 @@
 # Personal files
-printers.csv
-test.csv
-test_webpage.txt
+*.csv
+*.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
