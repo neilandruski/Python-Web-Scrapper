@@ -1,16 +1,13 @@
-#!/usr/bin/python3
+#!~/opt/anaconda3/bin/python3
 
 import pandas, requests, datetime, urllib3, time
+from bs4 import BeautifulSoup as bs
 
 from selenium import webdriver 
 from selenium.webdriver import Chrome 
 from selenium.webdriver.chrome.service import Service 
 from selenium.webdriver.common.by import By 
 from webdriver_manager.chrome import ChromeDriverManager
-
-import sys
-
-from bs4 import BeautifulSoup as bs
 
 # web scrapping code from 
 # https://www.zenrows.com/blog/scraping-javascript-rendered-web-pages#installing-the-requirements
@@ -28,6 +25,7 @@ chrome_service = Service(chrome_path)
 driver = Chrome(options=options, service=chrome_service) 
 driver.implicitly_wait(3)
 
+#Ignore http warning and go to site
 urllib3.disable_warnings()
 
 '''
@@ -49,7 +47,7 @@ def get_altalink_levels(ip):
     job_elements = soup.find_all("div", class_="levelIndicatorPercentage")
     levels = []
     for item in job_elements:
-        levels.append(float(item.text[1:3]))
+        levels.append(float(item.text.strip("\n%")))
     return levels
 
 #Parse the versalink webpage for the toner level
@@ -78,7 +76,7 @@ Main Function loop
 #Pull in intial file for IPs to scrap
 df = pandas.read_csv('test.csv')
 
-#Loop through IPs and get levels. Set the Levels in Pandas and update csv
+#Loop through IP list in Pandas. Set the Levels in new Array
 printer_level_list = []
 levels = []
 for index, row in df.iterrows():
@@ -88,18 +86,15 @@ for index, row in df.iterrows():
         levels = get_versalink_levels(row['ip'].strip()) 
     printer_level_list.append(levels)
 
-#Testing that the Printers returned levels
-print (printer_level_list)
-#sys.exit()
-
+#Loop through Levels Array and update Pandas.
 i = 0
 while i < len(printer_level_list):
     if(len(printer_level_list[i]) == 0):
-        print (df.loc[i].at['ip'] + "is unavailable")
+        #print (df.loc[i].at['ip'] + "is unavailable")
         i+=1
         continue
     if(len(printer_level_list[i]) == 1):
-       # print("black toner only")#testing only
+        #print("black toner only")#testing only
         df.iat[i,10]= printer_level_list[i][0]
         i+=1
         continue
@@ -110,6 +105,7 @@ while i < len(printer_level_list):
     df.iat[i,10]= printer_level_list[i][3]
     i+=1
 
+#Get current date and save Pandas to new csv
 dt = datetime.datetime.now()
-name = "Printer_Levels_" + dt.strftime("%Y-%m-%d") + ".csv"
+name = "Levels/Printer_Levels_" + dt.strftime("%Y-%m-%d") + ".csv"
 df.to_csv(name, index=False)
