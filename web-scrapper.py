@@ -3,26 +3,14 @@
 import pandas, requests, datetime, urllib3, time
 from bs4 import BeautifulSoup as bs
 
-from selenium import webdriver 
-from selenium.webdriver import Chrome 
-from selenium.webdriver.chrome.service import Service 
+from selenium import webdriver
 from selenium.webdriver.common.by import By 
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.service import Service
 
-# web scrapping code from 
-# https://www.zenrows.com/blog/scraping-javascript-rendered-web-pages#installing-the-requirements
-# start by defining the options 
-options = webdriver.ChromeOptions() 
+service = Service()
+options = webdriver.ChromeOptions()
 options.add_argument('--headless') # it's more scalable to work in headless mode 
-# normally, selenium waits for all resources to download 
-# we don't need it as the page also populated with the running javascript code. 
-options.page_load_strategy = 'none' 
-
-# this returns the path web driver downloaded 
-chrome_path = ChromeDriverManager().install() 
-chrome_service = Service(chrome_path) 
-# pass the defined options and service objects to initialize the web driver 
-driver = Chrome(options=options, service=chrome_service) 
+driver = webdriver.Chrome(service=service, options=options)
 driver.implicitly_wait(3)
 
 #Ignore http warning and go to site
