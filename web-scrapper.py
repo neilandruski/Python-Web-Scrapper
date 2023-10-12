@@ -97,3 +97,5 @@ while i < len(printer_level_list):
 dt = datetime.datetime.now()
 name = "Levels/Printer_Levels_" + dt.strftime("%Y-%m-%d") + ".csv"
 df.to_csv(name, index=False)
+
+driver.quit()
