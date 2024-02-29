@@ -22,8 +22,14 @@ FUNCTIONS
 --------------------------------------------------------------------------------
 '''
 
-#Parse Altalink page for toner levels
-def get_altalink_levels(ip):
+def get_altalink_levels(ip: str) -> [str]: # type: ignore
+    """
+    get the toner levels for altalink models
+
+    :param ip: string version of an ip
+    :return: array of strings for the current levels
+    """
+
     URL = "http://" + ip + "/stat/welcome.php?tab=status"
     print ("testing URL: " + URL)
     try:
@@ -38,14 +44,20 @@ def get_altalink_levels(ip):
         levels.append(float(item.text.strip("\n%")))
     return levels
 
-#Parse the versalink webpage for the toner level
-#TODO:Figure out why page is not being fully rendered
-def get_versalink_levels(ip):
+
+def get_versalink_levels(ip: str) -> [str]: # type: ignore
+    """
+    get the toner levels for Versalink models
+
+    :param ip: string version of an ip
+    :return: array of strings for the current levels
+    """
+
     URL = "http://" + ip + "/home/index.html#hashHome"
     print ("testing URL: " + URL)
     try:
         driver.get(URL)
-        time.sleep(10)
+        time.sleep(5)
     except:
         print("Can't reach " + ip + ", Please check the printer")
         return []

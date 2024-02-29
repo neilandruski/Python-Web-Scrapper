@@ -2,7 +2,8 @@
 *.csv
 *.txt
 Levels/
-.DS_Store
+.DS_Stor
+example.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
